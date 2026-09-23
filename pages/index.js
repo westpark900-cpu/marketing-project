@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase 직접 연결 (파일 경로 에러 완벽 방지)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+// Supabase URL 직접 입력 (환경변수 에러 원천 차단)
+const supabaseUrl = 'https://pwwzvqokpbzlhqdgutha.supabase.co';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
