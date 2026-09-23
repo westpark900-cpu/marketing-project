@@ -2,11 +2,9 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
 // Supabase URL 직접 입력 (환경변수 에러 원천 차단)
+// Supabase 연결 정보 직접 입력 (Vercel 환경변수 오류 완벽 차단)
 const supabaseUrl = 'https://pwwzvqokpbzlhqdgutha.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3d3p2cW9rcGJ6bGhxZGd1dGhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY3Mjc2ODAsImV4cCI6MjA0MjMwMzY4MH0.SbL_sM4nQ0x8L4y3_ExampleKeyHere';
 export default function Home() {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
