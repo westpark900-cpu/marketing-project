@@ -1,5 +1,11 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../src/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+
+// Supabase 직접 연결 (파일 경로 에러 완벽 방지)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function Home() {
   const [session, setSession] = useState(null);
