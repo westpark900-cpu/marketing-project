@@ -4,15 +4,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function AdvertiserPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   
-  // 폼 상태 값
   const [platform, setPlatform] = useState('네이버 스마트스토어');
   const [title, setTitle] = useState('');
   const [keyword, setKeyword] = useState('');
@@ -28,7 +27,7 @@ export default function AdvertiserPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         alert('광고주 로그인이 필요합니다.');
-        router.push('/login');
+        router.push('/');
         return;
       }
       setUser(session.user);
@@ -45,7 +44,7 @@ export default function AdvertiserPage() {
 
     setSubmitting(true);
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('campaigns')
         .insert([
           {
@@ -57,21 +56,17 @@ export default function AdvertiserPage() {
             reward_amount: parseInt(rewardAmount, 10),
             guide_text: guideText,
           },
-        ])
-        .select()
-        .single();
+        ]);
 
       if (error) throw error;
 
       setMessage({ type: 'success', text: '캠페인이 성공적으로 등록되었습니다!' });
-      // 폼 초기화
       setTitle('');
       setKeyword('');
       setProductPrice('');
       setRewardAmount('');
       setGuideText('');
 
-      // 검수 관리 페이지로 이동 안내
       setTimeout(() => {
         router.push('/advertiser/review-check');
       }, 1500);
@@ -120,7 +115,6 @@ export default function AdvertiserPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* 플랫폼 선택 옵션 보완 */}
             <div>
               <label className="block text-sm font-bold text-gray-800 mb-1">
                 리뷰 플랫폼 / 쇼핑몰 *
