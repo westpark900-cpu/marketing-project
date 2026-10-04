@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// Vercel 빌드 에러 방지를 위한 헬퍼 클라이언트 생성
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function Home() {
-  const router = useRouter();
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState('reviewer');
   const [campaigns, setCampaigns] = useState([]);
@@ -78,7 +77,7 @@ export default function Home() {
 
       setMessage({
         type: 'success',
-        text: '회원가입 요청 완료! (이메일 인증 확인 후 로그인해 주세요)',
+        text: '회원가입 요청이 완료되었습니다! (이메일 인증 확인 후 로그인하세요)',
       });
     } catch (err) {
       console.error('회원가입 오류:', err.message);
