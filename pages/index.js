@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase 연결 정보 직접 입력 (Vercel 환경변수 에러 원천 차단)
+// Supabase 연결 정보 직접 입력 (Publishable Key 적용으로 보안 에러 해결)
 const supabaseUrl = 'https://pwwzvqokpbzlhqdgutha.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseAnonKey = 'sb_publishable_6WuVKON_I7HcUebL79UvSg_f3CtM...'; 
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
