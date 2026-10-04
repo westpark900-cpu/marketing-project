@@ -4,9 +4,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const getSupabaseClient = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+  return createClient(supabaseUrl, supabaseAnonKey);
+};
 
 export default function MyPage() {
   const router = useRouter();
@@ -15,7 +17,6 @@ export default function MyPage() {
   const [withdrawals, setWithdrawals] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 환급 신청 폼 상태
   const [bankName, setBankName] = useState('KB국민은행');
   const [accountNumber, setAccountNumber] = useState('');
   const [accountHolder, setAccountHolder] = useState('');
@@ -24,18 +25,18 @@ export default function MyPage() {
   const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
+    const supabase = getSupabaseClient();
     const fetchUserData = async () => {
       setLoading(true);
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
           alert('로그인이 필요합니다.');
-          router.push('/login');
+          router.push('/');
           return;
         }
         setUser(session.user);
 
-        // 1. 내 리뷰 참여 및 페이백 적립 내역 조회
         const { data: partData, error: partError } = await supabase
           .from('participations')
           .select(`
@@ -53,7 +54,6 @@ export default function MyPage() {
         if (partError) throw partError;
         setParticipations(partData || []);
 
-        // 2. 출금/환급 신청 내역 조회 (withdrawals 테이블)
         const { data: withData } = await supabase
           .from('withdrawals')
           .select('*')
@@ -71,7 +71,6 @@ export default function MyPage() {
     fetchUserData();
   }, [router]);
 
-  // 총 적립된 포인트 (검수 승인 완료된 총 페이백 + 리워드 금액)
   const totalEarnedPoints = participations
     .filter((item) => item.status === 'approved')
     .reduce((sum, item) => {
@@ -80,15 +79,12 @@ export default function MyPage() {
       return sum + price + reward;
     }, 0);
 
-  // 출금 완료/신청 중인 포인트 합계
   const totalWithdrawnPoints = withdrawals
     .filter((w) => w.status !== 'rejected')
     .reduce((sum, w) => sum + (w.amount || 0), 0);
 
-  // 현재 출금 가능한 잔여 포인트
   const availablePoints = totalEarnedPoints - totalWithdrawnPoints;
 
-  // 현금 환급 신청 처리
   const handleWithdrawSubmit = async (e) => {
     e.preventDefault();
     const amountNum = Number(withdrawAmount);
@@ -110,6 +106,7 @@ export default function MyPage() {
 
     setSubmitting(true);
     try {
+      const supabase = getSupabaseClient();
       const { data, error } = await supabase
         .from('withdrawals')
         .insert([
@@ -119,7 +116,7 @@ export default function MyPage() {
             bank_name: bankName,
             account_number: accountNumber,
             account_holder: accountHolder,
-            status: 'pending', // 'pending', 'completed', 'rejected'
+            status: 'pending',
           },
         ])
         .select()
@@ -129,7 +126,7 @@ export default function MyPage() {
 
       setWithdrawals([data, ...withdrawals]);
       setWithdrawAmount('');
-      setMessage({ type: 'success', text: '현금 환급 신청이 접수되었습니다. (영업일 기준 1~2일 내 입금)' });
+      setMessage({ type: 'success', text: '현금 환급 신청이 접수되었습니다.' });
     } catch (err) {
       console.error('환급 신청 오류:', err.message);
       setMessage({ type: 'error', text: '환급 신청 처리 중 오류가 발생했습니다.' });
@@ -162,9 +159,8 @@ export default function MyPage() {
           </span>
         </div>
 
-        {/* 포인트 현황 요약 카드 */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sm:p-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">💰 나의 페이백 & 리워드 포인트</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-6">💰 나의 페이백 &amp; 리워드 포인트</h1>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-blue-50 p-4 rounded-lg">
@@ -182,7 +178,6 @@ export default function MyPage() {
           </div>
         </div>
 
-        {/* 현금 환급 신청 폼 */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sm:p-8">
           <h2 className="text-lg font-bold text-gray-900 mb-4">🏦 현금 환급 (출금) 신청</h2>
 
@@ -265,7 +260,6 @@ export default function MyPage() {
           </form>
         </div>
 
-        {/* 리뷰 참여 내역 */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sm:p-8">
           <h2 className="text-lg font-bold text-gray-900 mb-4">📦 나의 리뷰 미션 참여 내역</h2>
 
