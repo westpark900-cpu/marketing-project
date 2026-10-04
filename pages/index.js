@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
 
-// Vercel 빌드 에러 방지를 위한 헬퍼 클라이언트 생성
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const getSupabaseClient = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+  return createClient(supabaseUrl, supabaseAnonKey);
+};
 
 export default function Home() {
+  const router = useRouter();
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState('reviewer');
   const [campaigns, setCampaigns] = useState([]);
@@ -19,6 +22,7 @@ export default function Home() {
   const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
+    const supabase = getSupabaseClient();
     const initSessionAndData = async () => {
       setLoading(true);
       try {
@@ -65,6 +69,7 @@ export default function Home() {
 
     setAuthLoading(true);
     try {
+      const supabase = getSupabaseClient();
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -77,7 +82,7 @@ export default function Home() {
 
       setMessage({
         type: 'success',
-        text: '회원가입 요청이 완료되었습니다! (이메일 인증 확인 후 로그인하세요)',
+        text: '회원가입 요청이 완료되었습니다!',
       });
     } catch (err) {
       console.error('회원가입 오류:', err.message);
@@ -96,6 +101,7 @@ export default function Home() {
 
     setAuthLoading(true);
     try {
+      const supabase = getSupabaseClient();
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -114,6 +120,7 @@ export default function Home() {
   };
 
   const handleSignOut = async () => {
+    const supabase = getSupabaseClient();
     await supabase.auth.signOut();
     setUser(null);
     setMessage({ type: 'success', text: '로그아웃 되었습니다.' });
