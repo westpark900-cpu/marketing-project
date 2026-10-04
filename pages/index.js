@@ -4,15 +4,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
 
-// 브라우저에 공개되어도 안전한 Anon Key 환경변수 참조
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function Home() {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [userRole, setUserRole] = useState('reviewer'); // 'reviewer' | 'advertiser'
+  const [userRole, setUserRole] = useState('reviewer');
   const [campaigns, setCampaigns] = useState([]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,14 +23,12 @@ export default function Home() {
     const initSessionAndData = async () => {
       setLoading(true);
       try {
-        // 세션 확인
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           setUser(session.user);
           setUserRole(session.user.user_metadata?.role || 'reviewer');
         }
 
-        // 전체 캠페인 목록 조회
         const { data, error } = await supabase
           .from('campaigns')
           .select('*')
@@ -48,7 +45,6 @@ export default function Home() {
 
     initSessionAndData();
 
-    // 인증 상태 변경 감지
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         setUser(session.user);
@@ -61,7 +57,6 @@ export default function Home() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // 회원가입
   const handleSignUp = async (e) => {
     e.preventDefault();
     if (!email || !password) {
@@ -71,7 +66,7 @@ export default function Home() {
 
     setAuthLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -83,7 +78,7 @@ export default function Home() {
 
       setMessage({
         type: 'success',
-        text: '회원가입 요청이 완료되었습니다! (이메일 인증 확인 후 로그인하세요)',
+        text: '회원가입 요청 완료! (이메일 인증 확인 후 로그인해 주세요)',
       });
     } catch (err) {
       console.error('회원가입 오류:', err.message);
@@ -93,7 +88,6 @@ export default function Home() {
     }
   };
 
-  // 로그인
   const handleSignIn = async (e) => {
     e.preventDefault();
     if (!email || !password) {
@@ -120,7 +114,6 @@ export default function Home() {
     }
   };
 
-  // 로그아웃
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -134,16 +127,15 @@ export default function Home() {
       </Head>
 
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* 상단 헤더 */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-wrap justify-between items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">🚀 리얼뷰 - C2C 리뷰 리워드 플랫폼</h1>
             <p className="text-xs text-gray-500 mt-1">
-              오픈마켓 구매평 페이백 & SNS 리뷰 체험단
+              오픈마켓 구매평 페이백 &amp; SNS 리뷰 체험단
             </p>
           </div>
 
-          {user ? (
+          {user && (
             <div className="flex items-center space-x-3">
               <span className="text-sm text-gray-700">
                 로그인 계정: <strong>{user.email}</strong> ({userRole === 'advertiser' ? '광고주' : '리뷰어'})
@@ -166,14 +158,13 @@ export default function Home() {
                   href="/mypage"
                   className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-semibold hover:bg-green-700 transition"
                 >
-                  💰 마이페이지 (포인트/환급)
+                  💰 마이페이지
                 </Link>
               )}
             </div>
-          ) : null}
+          )}
         </div>
 
-        {/* 비로그인 시 로그인/회원가입 폼 */}
         {!user && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sm:p-8">
             <h2 className="text-lg font-bold text-gray-900 mb-4">로그인 / 회원가입</h2>
@@ -224,6 +215,7 @@ export default function Home() {
 
               <div className="flex space-x-3 pt-2">
                 <button
+                  type="button"
                   onClick={handleSignIn}
                   disabled={authLoading}
                   className="flex-1 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-blue-300 text-sm transition"
@@ -231,6 +223,7 @@ export default function Home() {
                   {authLoading ? '처리 중...' : '로그인'}
                 </button>
                 <button
+                  type="button"
                   onClick={handleSignUp}
                   disabled={authLoading}
                   className="flex-1 py-2.5 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:bg-green-300 text-sm transition"
@@ -242,7 +235,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* 진행 중인 캠페인 목록 */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sm:p-8">
           <h2 className="text-xl font-bold text-gray-900 mb-6">🔥 진행 중인 리뷰 캠페인</h2>
 
