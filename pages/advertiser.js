@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
 
-// 빌드 타임 에러를 방지하는 동적 Supabase 클라이언트 생성 헬퍼 함수
 const getSupabaseClient = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
@@ -15,7 +14,7 @@ export default function AdvertiserPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   
-  const [platform, setPlatform] = useState('네이버 스마트스토어');
+  const [platform, setPlatform] = useState('네이버 스마트스토어 (구매평 페이백)');
   const [title, setTitle] = useState('');
   const [keyword, setKeyword] = useState('');
   const [productPrice, setProductPrice] = useState('');
@@ -103,7 +102,7 @@ export default function AdvertiserPage() {
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900">📢 신규 리뷰 캠페인 등록</h1>
             <p className="text-sm text-gray-500 mt-1">
-              오픈마켓 구매평 및 SNS 체험단 미션을 등록하고 실구매 리뷰어를 모집해 보세요.
+              오픈마켓 구매평 페이백 및 SNS 체험단 미션을 등록하고 실구매 리뷰어를 모집해 보세요.
             </p>
           </div>
 
@@ -129,11 +128,11 @@ export default function AdvertiserPage() {
                 onChange={(e) => setPlatform(e.target.value)}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
               >
-                <option value="네이버 스마트스토어">네이버 스마트스토어 (구매평 페이백)</option>
-                <option value="쿠팡">쿠팡 (구매평 페이백)</option>
-                <option value="자사몰/기타 오픈마켓">자사몰 / 기타 오픈마켓</option>
-                <option value="네이버 블로그">네이버 블로그 (체험단)</option>
-                <option value="인스타그램">인스타그램 (체험단/릴스)</option>
+                <option value="네이버 스마트스토어 (구매평 페이백)">네이버 스마트스토어 (구매평 페이백)</option>
+                <option value="쿠팡 (구매평 페이백)">쿠팡 (구매평 페이백)</option>
+                <option value="자사몰 / 기타 오픈마켓">자사몰 / 기타 오픈마켓</option>
+                <option value="네이버 블로그 (체험단)">네이버 블로그 (체험단)</option>
+                <option value="인스타그램 (체험단/릴스)">인스타그램 (체험단/릴스)</option>
                 <option value="유튜브 숏츠">유튜브 숏츠</option>
               </select>
             </div>
@@ -154,13 +153,13 @@ export default function AdvertiserPage() {
 
             <div>
               <label className="block text-sm font-bold text-gray-800 mb-1">
-                검색 키워드 (리뷰어가 검색할 상품 키워드)
+                검색 키워드 (리뷰어가 검색할 상품 키워드) *
               </label>
               <input
                 type="text"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                placeholder="예: 친환경 보틀 추천, 가스통 커버"
+                placeholder="예: 캠핑 가스통 추천, 가스통 커버"
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
               />
             </div>
