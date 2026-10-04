@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase 연결 정보 직접 입력 (Publishable Key 적용으로 보안 에러 해결)
+// Supabase 연결 정보 (전체 Publishable Key 적용 완료)
 const supabaseUrl = 'https://pwwzvqokpbzlhqdgutha.supabase.co';
-const supabaseAnonKey = 'sb_publishable_6WuVKON_I7HcUebL79UvSg_f3CtM...'; 
+const supabaseAnonKey = 'sb_publishable_6WuVKON_I7HcUebL79UvSg_f3CtMJXz'; 
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
