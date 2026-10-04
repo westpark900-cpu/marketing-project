@@ -1,159 +1,224 @@
 import { useState, useEffect } from 'react';
+import Head from 'next/head';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { supabase } from './index';
+import { createClient } from '@supabase/supabase-js';
 
-export default function Advertiser() {
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+export default function AdvertiserPage() {
   const router = useRouter();
-  const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  // 폼 입력 상태
+  const [user, setUser] = useState(null);
+  
+  // 폼 상태 값
+  const [platform, setPlatform] = useState('네이버 스마트스토어');
   const [title, setTitle] = useState('');
-  const [platform, setPlatform] = useState('네이버 블로그');
-  const [searchKeyword, setSearchKeyword] = useState('');
+  const [keyword, setKeyword] = useState('');
   const [productPrice, setProductPrice] = useState('');
-  const [rewardPrice, setRewardPrice] = useState('');
-  const [description, setDescription] = useState('');
+  const [rewardAmount, setRewardAmount] = useState('');
+  const [guideText, setGuideText] = useState('');
+
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        alert('로그인이 필요한 페이지입니다.');
-        router.push('/');
-      } else {
-        setSession(session);
+        alert('광고주 로그인이 필요합니다.');
+        router.push('/login');
+        return;
       }
-    });
+      setUser(session.user);
+    };
+    checkUser();
   }, [router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!title || !searchKeyword || !productPrice || !rewardPrice) {
-      alert('모든 필수 항목을 입력해 주세요.');
+    if (!title || !productPrice || !rewardAmount) {
+      setMessage({ type: 'error', text: '필수 항목(제목, 제품 가격, 작성 리워드)을 입력해 주세요.' });
       return;
     }
 
-    setLoading(true);
+    setSubmitting(true);
+    try {
+      const { data, error } = await supabase
+        .from('campaigns')
+        .insert([
+          {
+            advertiser_id: user.id,
+            platform,
+            title,
+            keyword,
+            product_price: parseInt(productPrice, 10),
+            reward_amount: parseInt(rewardAmount, 10),
+            guide_text: guideText,
+          },
+        ])
+        .select()
+        .single();
 
-    const { error } = await supabase.from('campaigns').insert([
-      {
-        advertiser_id: session.user.id,
-        title,
-        platform,
-        search_keyword: searchKeyword,
-        product_price: parseInt(productPrice, 10),
-        reward_price: parseInt(rewardPrice, 10),
-        description,
-      },
-    ]);
+      if (error) throw error;
 
-    setLoading(false);
+      setMessage({ type: 'success', text: '캠페인이 성공적으로 등록되었습니다!' });
+      // 폼 초기화
+      setTitle('');
+      setKeyword('');
+      setProductPrice('');
+      setRewardAmount('');
+      setGuideText('');
 
-    if (error) {
-      alert('캠페인 등록 실패: ' + error.message);
-    } else {
-      alert('🚀 새 리뷰 캠페인이 성공적으로 등록되었습니다!');
-      router.push('/');
+      // 검수 관리 페이지로 이동 안내
+      setTimeout(() => {
+        router.push('/advertiser/review-check');
+      }, 1500);
+    } catch (err) {
+      console.error('캠페인 등록 오류:', err.message);
+      setMessage({ type: 'error', text: '캠페인 등록에 실패했습니다.' });
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  if (!session) return <p style={{ padding: '20px' }}>확인 중...</p>;
-
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '600px', margin: '0 auto' }}>
-      <button 
-        onClick={() => router.push('/')} 
-        style={{ marginBottom: '20px', padding: '8px 14px', cursor: 'pointer', backgroundColor: '#eee', border: '1px solid #ccc', borderRadius: '4px' }}
-      >
-        ← 메인으로 돌아가기
-      </button>
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <Head>
+        <title>신규 캠페인 등록 | 리얼뷰 광고주 센터</title>
+      </Head>
 
-      <h1>📢 신규 리뷰 캠페인 등록</h1>
-      <p style={{ color: '#666' }}>광고주 전용 페이지입니다. 리뷰어들에게 맡길 제품 미션을 등록해 보세요.</p>
-
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
-        <div>
-          <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>리뷰 플랫폼</label>
-          <select 
-            value={platform} 
-            onChange={(e) => setPlatform(e.target.value)}
-            style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-          >
-            <option value="네이버 블로그">네이버 블로그</option>
-            <option value="인스타그램">인스타그램</option>
-            <option value="쿠팡">쿠팡</option>
-            <option value="유튜브 숏츠">유튜브 숏츠</option>
-          </select>
+      <div className="max-w-2xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <Link href="/" className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-300 transition">
+            ← 메인으로 돌아가기
+          </Link>
+          <Link href="/advertiser/review-check" className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition">
+            🔍 제출된 리뷰 검수하기
+          </Link>
         </div>
 
-        <div>
-          <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>캠페인 제목 *</label>
-          <input 
-            type="text" 
-            placeholder="예: [신제품] 친환경 가스통 커버 리뷰어 모집" 
-            value={title} 
-            onChange={(e) => setTitle(e.target.value)}
-            style={{ width: '95%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-            required
-          />
-        </div>
-
-        <div>
-          <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>검색 키워드 (리뷰어가 검색할 포털 키워드) *</label>
-          <input 
-            type="text" 
-            placeholder="예: 캠핑 가스통 추천, 가스통 커버" 
-            value={searchKeyword} 
-            onChange={(e) => setSearchKeyword(e.target.value)}
-            style={{ width: '95%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-            required
-          />
-        </div>
-
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <div style={{ flex: 1 }}>
-            <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>제품 가격 (원) *</label>
-            <input 
-              type="number" 
-              placeholder="예: 25000" 
-              value={productPrice} 
-              onChange={(e) => setProductPrice(e.target.value)}
-              style={{ width: '90%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-              required
-            />
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sm:p-8">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900">📢 신규 리뷰 캠페인 등록</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              오픈마켓 구매평 및 SNS 체험단 미션을 등록하고 실구매 리뷰어를 모집해 보세요.
+            </p>
           </div>
-          <div style={{ flex: 1 }}>
-            <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>작성 리워드 (원) *</label>
-            <input 
-              type="number" 
-              placeholder="예: 5000" 
-              value={rewardPrice} 
-              onChange={(e) => setRewardPrice(e.target.value)}
-              style={{ width: '90%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-              required
-            />
-          </div>
-        </div>
 
-        <div>
-          <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>상세 가이드라인 / 미션 내용</label>
-          <textarea 
-            rows="5" 
-            placeholder="리뷰어가 꼭 포함해야 하는 사진 키워드나 태그 등 상세 미션을 입력하세요." 
-            value={description} 
-            onChange={(e) => setDescription(e.target.value)}
-            style={{ width: '95%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-          />
-        </div>
+          {message.text && (
+            <div
+              className={`mb-6 p-4 rounded-lg text-sm font-medium ${
+                message.type === 'success'
+                  ? 'bg-green-50 text-green-700 border border-green-200'
+                  : 'bg-red-50 text-red-700 border border-red-200'
+              }`}
+            >
+              {message.text}
+            </div>
+          )}
 
-        <button 
-          type="submit" 
-          disabled={loading}
-          style={{ padding: '12px', backgroundColor: '#0070f3', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}
-        >
-          {loading ? '등록 중...' : '캠페인 등록하기'}
-        </button>
-      </form>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* 플랫폼 선택 옵션 보완 */}
+            <div>
+              <label className="block text-sm font-bold text-gray-800 mb-1">
+                리뷰 플랫폼 / 쇼핑몰 *
+              </label>
+              <select
+                value={platform}
+                onChange={(e) => setPlatform(e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+              >
+                <option value="네이버 스마트스토어">네이버 스마트스토어 (구매평 페이백)</option>
+                <option value="쿠팡">쿠팡 (구매평 페이백)</option>
+                <option value="자사몰/기타 오픈마켓">자사몰 / 기타 오픈마켓</option>
+                <option value="네이버 블로그">네이버 블로그 (체험단)</option>
+                <option value="인스타그램">인스타그램 (체험단/릴스)</option>
+                <option value="유튜브 숏츠">유튜브 숏츠</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-800 mb-1">
+                캠페인 제목 *
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="예: [스마트스토어] 친환경 보틀 구매평 작성 이벤트"
+                required
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-800 mb-1">
+                검색 키워드 (리뷰어가 검색할 상품 키워드)
+              </label>
+              <input
+                type="text"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                placeholder="예: 친환경 보틀 추천, 가스통 커버"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-800 mb-1">
+                  제품 가격 (원) - 페이백 금액 *
+                </label>
+                <input
+                  type="number"
+                  value={productPrice}
+                  onChange={(e) => setProductPrice(e.target.value)}
+                  placeholder="예: 25000"
+                  required
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-800 mb-1">
+                  작성 리워드 (원) *
+                </label>
+                <input
+                  type="number"
+                  value={rewardAmount}
+                  onChange={(e) => setRewardAmount(e.target.value)}
+                  placeholder="예: 5000"
+                  required
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-800 mb-1">
+                상세 가이드라인 / 미션 내용
+              </label>
+              <textarea
+                rows={5}
+                value={guideText}
+                onChange={(e) => setGuideText(e.target.value)}
+                placeholder="리뷰어가 구매 시 검색해야 하는 방식, 필수 포함 사진(2장 이상 등), 키워드 및 구매평 작성 가이드를 입력하세요."
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full py-3.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:bg-blue-300 transition text-base"
+            >
+              {submitting ? '캠페인 등록 중...' : '캠페인 등록하기'}
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
