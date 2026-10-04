@@ -4,9 +4,11 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const getSupabaseClient = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+  return createClient(supabaseUrl, supabaseAnonKey);
+};
 
 export default function CampaignDetailPage() {
   const router = useRouter();
@@ -16,7 +18,6 @@ export default function CampaignDetailPage() {
   const [user, setUser] = useState(null);
   const [participation, setParticipation] = useState(null);
 
-  // 리뷰 및 구매 인증 상태
   const [orderNumber, setOrderNumber] = useState('');
   const [reviewUrl, setReviewUrl] = useState('');
   const [proofImageUrl, setProofImageUrl] = useState('');
@@ -26,6 +27,7 @@ export default function CampaignDetailPage() {
   const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
+    const supabase = getSupabaseClient();
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
@@ -38,10 +40,10 @@ export default function CampaignDetailPage() {
   useEffect(() => {
     if (!id) return;
 
+    const supabase = getSupabaseClient();
     const fetchCampaignAndParticipation = async () => {
       setLoading(true);
       try {
-        // 1. 캠페인 상세 정보 조회
         const { data: campaignData, error: campaignError } = await supabase
           .from('campaigns')
           .select('*')
@@ -51,7 +53,6 @@ export default function CampaignDetailPage() {
         if (campaignError) throw campaignError;
         setCampaign(campaignData);
 
-        // 2. 로그인 유저의 미션 참여 내역 조회
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           const { data: partData } = await supabase
@@ -79,16 +80,16 @@ export default function CampaignDetailPage() {
     fetchCampaignAndParticipation();
   }, [id]);
 
-  // 미션 참여 신청
   const handleApplyMission = async () => {
     if (!user) {
       alert('로그인이 필요합니다.');
-      router.push('/login');
+      router.push('/');
       return;
     }
 
     setSubmitting(true);
     try {
+      const supabase = getSupabaseClient();
       const { data, error } = await supabase
         .from('participations')
         .insert([
@@ -104,7 +105,7 @@ export default function CampaignDetailPage() {
       if (error) throw error;
 
       setParticipation(data);
-      setMessage({ type: 'success', text: '미션 참여 신청 완료! 제품 구매 후 리뷰 및 주문정보를 제출해 주세요.' });
+      setMessage({ type: 'success', text: '미션 참여가 신청되었습니다!' });
     } catch (err) {
       console.error('참여 신청 오류:', err.message);
       setMessage({ type: 'error', text: err.message || '참여 신청에 실패했습니다.' });
@@ -113,7 +114,6 @@ export default function CampaignDetailPage() {
     }
   };
 
-  // 구매 인증 및 리뷰 정보 제출
   const handleSubmitProof = async (e) => {
     e.preventDefault();
     if (!orderNumber.trim()) {
@@ -123,6 +123,7 @@ export default function CampaignDetailPage() {
 
     setSubmitting(true);
     try {
+      const supabase = getSupabaseClient();
       const { data, error } = await supabase
         .from('participations')
         .update({
@@ -139,7 +140,7 @@ export default function CampaignDetailPage() {
       if (error) throw error;
 
       setParticipation(data);
-      setMessage({ type: 'success', text: '구매 및 리뷰 인증이 완료되었습니다. 검수 완료 후 포인트가 지급됩니다!' });
+      setMessage({ type: 'success', text: '인증 정보가 제출되었습니다!' });
     } catch (err) {
       console.error('제출 오류:', err.message);
       setMessage({ type: 'error', text: '인증 제출에 실패했습니다.' });
@@ -192,10 +193,9 @@ export default function CampaignDetailPage() {
             </div>
           )}
 
-          {/* 캠페인 헤더 */}
           <div className="border-b pb-6 mb-6">
             <span className="inline-block px-3 py-1 bg-blue-50 text-blue-700 font-semibold text-xs rounded-full mb-3">
-              {campaign.platform || '스마트스토어 / 쿠팡 / 자사몰'}
+              {campaign.platform || '네이버 스마트스토어'}
             </span>
             <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">{campaign.title}</h1>
             
@@ -220,27 +220,25 @@ export default function CampaignDetailPage() {
             </div>
           </div>
 
-          {/* 상세 가이드라인 */}
           <div className="mb-8">
-            <h2 className="text-lg font-bold text-gray-900 mb-3">📋 상세 가이드라인 및 미션 내용</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-3">📋 상세 가이드라인 및 구매 미션</h2>
             <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-950 whitespace-pre-line leading-relaxed">
               {campaign.guide_text || '제품 검색 후 구매를 진행하고 실구매 리뷰를 남겨주세요.'}
             </div>
           </div>
 
-          {/* 미션 진행/인증 영역 */}
           <div className="border-t pt-6">
             {!participation ? (
               <div className="text-center py-4">
                 <p className="text-sm text-gray-600 mb-4">
-                  가이드라인을 확인하셨다면 버튼을 클릭하여 미션 참여를 신청해 주세요.
+                  가이드라인을 숙지하셨다면 아래 버튼을 눌러 미션 참여를 시작하세요.
                 </p>
                 <button
                   onClick={handleApplyMission}
                   disabled={submitting}
                   className="w-full sm:w-auto px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-blue-300 transition"
                 >
-                  {submitting ? '신청 중...' : '미션 참여 신청하기'}
+                  {submitting ? '신청 처리 중...' : '미션 참여 신청하기'}
                 </button>
               </div>
             ) : participation.status === 'applied' ? (
@@ -288,7 +286,7 @@ export default function CampaignDetailPage() {
                       type="url"
                       value={proofImageUrl}
                       onChange={(e) => setProofImageUrl(e.target.value)}
-                      placeholder="이미지 캡처 링크"
+                      placeholder="캡처 이미지 링크"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                     />
                   </div>
@@ -305,7 +303,7 @@ export default function CampaignDetailPage() {
             ) : (
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-md font-bold text-gray-800">제출된 인증 내역</h3>
+                  <h3 className="text-md font-bold text-gray-800">제출된 구매 및 리뷰 인증</h3>
                   <span
                     className={`px-3 py-1 text-xs font-semibold rounded-full ${
                       participation.status === 'approved'
@@ -316,7 +314,7 @@ export default function CampaignDetailPage() {
                     }`}
                   >
                     {participation.status === 'approved'
-                      ? '승인됨 (포인트 적립 완료)'
+                      ? '검수 승인 (포인트 적립 완료)'
                       : participation.status === 'rejected'
                       ? '반려됨'
                       : '검수 대기 중'}
