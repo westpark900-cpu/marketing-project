@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase URL 직접 입력 (환경변수 에러 원천 차단)
-// Supabase 연결 정보 직접 입력 (Vercel 환경변수 오류 완벽 차단)
+// Supabase 연결 정보 직접 입력 (Vercel 환경변수 에러 원천 차단)
 const supabaseUrl = 'https://pwwzvqokpbzlhqdgutha.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3d3p2cW9rcGJ6bGhxZGd1dGhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY3Mjc2ODAsImV4cCI6MjA0MjMwMzY4MH0.SbL_sM4nQ0x8L4y3_ExampleKeyHere';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 export default function Home() {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -57,15 +59,41 @@ export default function Home() {
       {!session ? (
         <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '8px', backgroundColor: '#f9f9f9' }}>
           <h2>로그인 / 회원가입</h2>
-          <input type="email" placeholder="이메일 주소" value={email} onChange={(e) => setEmail(e.target.value)} style={{ display: 'block', marginBottom: '10px', width: '95%', padding: '10px' }} />
-          <input type="password" placeholder="비밀번호" value={password} onChange={(e) => setPassword(e.target.value)} style={{ display: 'block', marginBottom: '10px', width: '95%', padding: '10px' }} />
-          <select value={role} onChange={(e) => setRole(e.target.value)} style={{ marginBottom: '15px', padding: '10px', width: '100%' }}>
+          <input 
+            type="email" 
+            placeholder="이메일 주소" 
+            value={email} 
+            onChange={(e) => setEmail(e.target.value)} 
+            style={{ display: 'block', marginBottom: '10px', width: '95%', padding: '10px' }} 
+          />
+          <input 
+            type="password" 
+            placeholder="비밀번호" 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+            style={{ display: 'block', marginBottom: '10px', width: '95%', padding: '10px' }} 
+          />
+          <select 
+            value={role} 
+            onChange={(e) => setRole(e.target.value)} 
+            style={{ marginBottom: '15px', padding: '10px', width: '100%' }}
+          >
             <option value="user">일반 리뷰어 회원</option>
             <option value="advertiser">광고주 회원</option>
           </select>
           <div>
-            <button onClick={handleLogin} style={{ padding: '10px 20px', marginRight: '10px', cursor: 'pointer', backgroundColor: '#0070f3', color: '#fff', border: 'none', borderRadius: '4px' }}>로그인</button>
-            <button onClick={handleSignUp} style={{ padding: '10px 20px', cursor: 'pointer', backgroundColor: '#22c55e', color: '#fff', border: 'none', borderRadius: '4px' }}>회원가입</button>
+            <button 
+              onClick={handleLogin} 
+              style={{ padding: '10px 20px', marginRight: '10px', cursor: 'pointer', backgroundColor: '#0070f3', color: '#fff', border: 'none', borderRadius: '4px' }}
+            >
+              로그인
+            </button>
+            <button 
+              onClick={handleSignUp} 
+              style={{ padding: '10px 20px', cursor: 'pointer', backgroundColor: '#22c55e', color: '#fff', border: 'none', borderRadius: '4px' }}
+            >
+              회원가입
+            </button>
           </div>
         </div>
       ) : (
@@ -73,7 +101,12 @@ export default function Home() {
           <div style={{ padding: '10px', backgroundColor: '#e0f2fe', borderRadius: '6px', marginBottom: '20px' }}>
             <p style={{ margin: 0 }}>로그인 계정: <b>{session.user.email}</b> ({profile?.role === 'advertiser' ? '광고주' : '리뷰어'})</p>
           </div>
-          <button onClick={() => supabase.auth.signOut().then(() => setSession(null))} style={{ padding: '6px 12px', cursor: 'pointer' }}>로그아웃</button>
+          <button 
+            onClick={() => supabase.auth.signOut().then(() => setSession(null))} 
+            style={{ padding: '6px 12px', cursor: 'pointer' }}
+          >
+            로그아웃
+          </button>
 
           <hr style={{ margin: '20px 0' }} />
 
@@ -87,7 +120,12 @@ export default function Home() {
                   <h3>[{c.platform}] {c.title}</h3>
                   <p>검색 키워드: <b>{c.search_keyword}</b></p>
                   <p>제품가: {c.product_price.toLocaleString()}원 | 작성 리워드: <b>+{c.reward_price.toLocaleString()}원</b></p>
-                  <button onClick={() => alert('미션 인증 제출 페이지로 연결됩니다.')} style={{ padding: '8px 16px', backgroundColor: '#111', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>미션 참여하기</button>
+                  <button 
+                    onClick={() => alert('미션 인증 제출 페이지로 연결됩니다.')} 
+                    style={{ padding: '8px 16px', backgroundColor: '#111', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                  >
+                    미션 참여하기
+                  </button>
                 </div>
               ))}
             </div>
