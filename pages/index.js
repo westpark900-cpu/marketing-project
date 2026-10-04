@@ -103,16 +103,25 @@ export default function Home() {
           </div>
           <button 
             onClick={() => supabase.auth.signOut().then(() => setSession(null))} 
-            style={{ padding: '6px 12px', cursor: 'pointer' }}
+            style={{ padding: '6px 12px', cursor: 'pointer', marginRight: '10px' }}
           >
             로그아웃
           </button>
+
+          {profile?.role === 'advertiser' && (
+            <button 
+              onClick={() => window.location.href = '/advertiser'} 
+              style={{ padding: '8px 16px', backgroundColor: '#0070f3', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+            >
+              + 새 캠페인 등록하기
+            </button>
+          )}
 
           <hr style={{ margin: '20px 0' }} />
 
           <h2>🔥 진행 중인 리뷰 캠페인</h2>
           {campaigns.length === 0 ? (
-            <p>현재 등록된 캠페인이 없습니다. (광고주 페이지에서 등록 가능)</p>
+            <p>현재 등록된 캠페인이 없습니다.</p>
           ) : (
             <div style={{ display: 'grid', gap: '15px' }}>
               {campaigns.map((c) => (
