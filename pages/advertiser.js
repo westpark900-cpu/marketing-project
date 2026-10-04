@@ -4,9 +4,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// 빌드 타임 에러를 방지하는 동적 Supabase 클라이언트 생성 헬퍼 함수
+const getSupabaseClient = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+  return createClient(supabaseUrl, supabaseAnonKey);
+};
 
 export default function AdvertiserPage() {
   const router = useRouter();
@@ -24,6 +27,7 @@ export default function AdvertiserPage() {
 
   useEffect(() => {
     const checkUser = async () => {
+      const supabase = getSupabaseClient();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         alert('광고주 로그인이 필요합니다.');
@@ -44,6 +48,7 @@ export default function AdvertiserPage() {
 
     setSubmitting(true);
     try {
+      const supabase = getSupabaseClient();
       const { error } = await supabase
         .from('campaigns')
         .insert([
